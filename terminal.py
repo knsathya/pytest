@@ -38,7 +38,7 @@ class RemoteTerminal(object):
         logger.debug("Remote terminal close()")
 
 class SerialTerminal(RemoteTerminal):
-    def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize="8", stopbits="1", hfc=False, sfc=False, timeout=4):
+    def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize=8, stopbits=1, hfc=False, sfc=False, timeout=4):
         super(SerialTerminal, self).__init__(port)
 
         if parity == "Odd":
@@ -48,25 +48,25 @@ class SerialTerminal(RemoteTerminal):
         else:
             parity = serial.PARITY_NONE
 
-        if bytesize == "7":
+        if bytesize == 7:
             bytesize = serial.SEVENBITS
-        elif bytesize == "6":
+        elif bytesize == 6:
             bytesize = serial.SIXBITS
-        elif bytesize == "5":
+        elif bytesize == 5:
             bytesize = serial.FIVEBITS
         else:
             bytesize = serial.EIGHTBITS
 
-        if stopbits == "1.5":
+        if stopbits == 1.5:
             stopbits = serial.STOPBITS_ONE_POINT_FIVE
-        elif stopbits == "2":
+        elif stopbits == 2:
             stopbits = serial.STOPBITS_TWO
         else:
             stopbits = serial.STOPBITS_ONE
 
         self.terminal = serial.Serial(port=port, baudrate=baud, parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
 
-        logger.error("Using serial port %s baudarate %d parity %d bytesize %d stopbits %d hfc %b sfc %b timeout %d" %
+        logger.error("Using serial port %s baudarate %d parity %s bytesize %d stopbits %d hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
     def send_command(self, cmd, error_str=["not found", "error", "failed"]):
@@ -74,12 +74,12 @@ class SerialTerminal(RemoteTerminal):
         self.command = cmd + "\r"
         self.terminal.flushOutput()
         self.terminal.flushInput()
-        self.terminal.write(self.cmd)
+        self.terminal.write(self.command)
         self.terminal.flush()
         self.command_output = self.terminal.readlines()
 
         for error in error_str:
-            status = not self.check_output(self, error)
+            status = not self.check_output(error)
             if status is False:
                 self.command_status = status
                 break

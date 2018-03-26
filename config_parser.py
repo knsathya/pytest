@@ -9,6 +9,7 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 template = {
+    #format (default-status(true or false, parser get format, accepted values)
     'remote_terminal' : (
         True, dict,
         {
@@ -135,7 +136,18 @@ def config_to_dict(parser):
     for section in parser.sections():
         res = {}
         for option in parser.options(section):
-            res[option] = parser.get(section, option)
+            if section in template.keys() and option in template[section][2].keys():
+                getfunc = template[section][2][option][1]
+                type = str
+                if getfunc == "getint":
+                    type = int
+                elif getfunc == "getboolean":
+                    type = bool
+                else:
+                    type = str
+                res[option] = type(getattr(parser, getfunc)(section, option))
+            else:
+                res[option] = str(parser.get(section, option))
         cfg_dict[section] = Namespace(res)
 
     return Namespace(cfg_dict)
@@ -147,8 +159,6 @@ class TestConfigParser(object):
         self.cfg_file =  cfg
         self.parser = ConfigParser()
         self.parser.read(cfg)
-        #self.cfg = config_to_dict(self.parser)
-        self.cfg = config_to_dict(self.parser)
 
         if not self.parser.has_section("remote_terminal"):
             raise Exception("Missing terminal section")
@@ -156,10 +166,13 @@ class TestConfigParser(object):
         if self.parser.get("remote_terminal", "type") not in ["local", 'adb', 'serial']:
             raise Exception("Invalid terminal type %s" % self.parser.get("terminal", "type"))
 
+        self.cfg = config_to_dict(self.parser)
+
         print self.cfg
 
 
 
 if __name__ == "__main__":
 
-    TestConfigParser("usb-config.ini")
+    obj = TestConfigParser("usb-config.ini")
+    print "test"

@@ -15,13 +15,19 @@ class USBTest(object):
             terminal = self.cfg.serial
             self.terminal = SerialTerminal(terminal.name, terminal.baudrate, terminal.parity,
                                            terminal.bytesize, terminal.stopbit, terminal.hfc,
-                                           terminal.sfc, terminal.timeout)
+                                           terminal.sfc, int(terminal.timeout))
 
-    def test_1(self):
-        self.parser.get("test_1")
+    def do_test_1(self):
+        test_params = self.cfg.test_1
+        logger.debug("Executing %s" % test_params.name)
+        output, status  = self.terminal.send_command(test_params.remote_cmd)
+        print self.terminal.print_output()
+
+
 
 if __name__ == "__main__":
     logger.debug("Start USB testing")
-    USBTest('usb-config.ini')
+    testobj = USBTest('usb-config.ini')
+    testobj.do_test_1()
 
 
