@@ -39,7 +39,7 @@ class RemoteTerminal(object):
 
 class SerialTerminal(RemoteTerminal):
     def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize="8", stopbits="1", hfc=False, sfc=False, timeout=4):
-        super(SerialTerminal, self).__init__(self, port)
+        super(SerialTerminal, self).__init__(port)
 
         if parity == "Odd":
             parity = serial.PARITY_ODD
@@ -66,7 +66,7 @@ class SerialTerminal(RemoteTerminal):
 
         self.terminal = serial.Serial(port=port, baudrate=baud, parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
 
-        logger.debug("Using serial port %s baudarate %d parity %d bytesize %d stopbits %d hfc %b sfc %b timeout %d" %
+        logger.error("Using serial port %s baudarate %d parity %d bytesize %d stopbits %d hfc %b sfc %b timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
     def send_command(self, cmd, error_str=["not found", "error", "failed"]):

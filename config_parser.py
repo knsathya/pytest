@@ -8,15 +8,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-def config_to_dict(parser):
-    cfg_dict = {}
-    for section in parser.sections():
-        cfg_dict[section] = {}
-        for option in parser.options(section):
-            cfg_dict[section][option] = parser.get(section, option)
-
-    return cfg_dict
-
 template = {
     'remote_terminal' : (
         True, dict,
@@ -139,6 +130,16 @@ class Namespace(dict, object):
     def delattr(ns, name):
         return object.__delattr__(ns, name)
 
+def config_to_dict(parser):
+    cfg_dict = {}
+    for section in parser.sections():
+        res = {}
+        for option in parser.options(section):
+            res[option] = parser.get(section, option)
+        cfg_dict[section] = Namespace(res)
+
+    return Namespace(cfg_dict)
+
 class TestConfigParser(object):
     def __init__(self, cfg):
         if not os.path.exists(os.path.abspath(cfg)):
@@ -146,6 +147,7 @@ class TestConfigParser(object):
         self.cfg_file =  cfg
         self.parser = ConfigParser()
         self.parser.read(cfg)
+        #self.cfg = config_to_dict(self.parser)
         self.cfg = config_to_dict(self.parser)
 
         if not self.parser.has_section("remote_terminal"):
@@ -154,8 +156,7 @@ class TestConfigParser(object):
         if self.parser.get("remote_terminal", "type") not in ["local", 'adb', 'serial']:
             raise Exception("Invalid terminal type %s" % self.parser.get("terminal", "type"))
 
-    def get_params(self, section):
-        res = {}
+        print self.cfg
 
 
 
