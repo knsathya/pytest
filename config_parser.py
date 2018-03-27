@@ -45,10 +45,10 @@ template = {
         {
             'name'  : (True, "get", None),
             'type'  : (True, "get", None),
-            'remote_cmd'    : (False, "get", None),
-            'local_cmd' : (False, "get", None),
-            'expected_remote_result': (False, "get", None),
-            'expected_local_result': (False, "get", None),
+            'remote_cmd'    : (True, "get", None),
+            'local_cmd' : (True, "get", None),
+            'remote_expected_result': (True, "get", None),
+            'local_expected_result': (True, "get", None),
         }
     )
 }

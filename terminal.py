@@ -2,11 +2,14 @@ import serial
 import io
 import logging
 from subprocess import Popen, PIPE
-
+from adb import adb_commands
+from adb import sign_m2crypto
+import os
+import re
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 
 class RemoteTerminal(object):
     def __init__(self, name):
@@ -66,12 +69,13 @@ class SerialTerminal(RemoteTerminal):
 
         self.terminal = serial.Serial(port=port, baudrate=baud, parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
 
-        logger.error("Using serial port %s baudarate %d parity %s bytesize %d stopbits %d hfc %d sfc %d timeout %d" %
+        logger.debug("Using serial port %s baudarate %d parity %s bytesize %d stopbits %d hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
     def send_command(self, cmd, error_str=["not found", "error", "failed"]):
         cmd_status = True
         self.command = cmd + "\r"
+        logger.debug("Executing serial command %s" % self.command)
         self.terminal.flushOutput()
         self.terminal.flushInput()
         self.terminal.write(self.command)
@@ -92,16 +96,19 @@ class SerialTerminal(RemoteTerminal):
 
 class LocalTerminal(RemoteTerminal):
     def __init__(self, name="shell"):
-        super(LocalTerminal, self).__init__(self, name)
+        super(LocalTerminal, self).__init__(name)
         self.terminal = Popen
 
     def send_command(self, cmd, error_str=["not found", "error", "failed"]):
         self.command = cmd
-        proc = self.terminal(list(self.command), shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+        cmd_list = re.split('[;]',cmd)
+        cmd_list = [cmd + ';' for cmd in cmd_list]
+        logger.debug("Executing shell command %s" % cmd_list)
+        proc = self.terminal(cmd_list, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         self.command_output, self.command_status = proc.communicate('through stdin to stdout')
 
         for error in error_str:
-            status = not self.check_output(self, error)
+            status = not self.check_output(error)
             if status is False:
                 self.command_status = status
                 break
@@ -110,16 +117,20 @@ class LocalTerminal(RemoteTerminal):
 
 class AdbTerminal(LocalTerminal):
     def __init__(self, device=""):
-        super(LocalTerminal, self).__init__(self, device)
+        super(AdbTerminal, self).__init__(device)
+        super(AdbTerminal, self).send_command("ls")
 
     def send_command(self, cmd, error_str=[]):
-        return super(LocalTerminal, self).send_command(self, "adb shell" + ' ' + cmd, error_str)
+        return super(AdbTerminal, self).send_command("adb shell " + cmd, error_str)
 
 
 
 if __name__ == "__main__":
-    terminal = SerialTerminal(port="/dev/ttyUSB4")
-
-    terminal.send_command("lsusb", )
+    #terminal = SerialTerminal(port="/dev/ttyUSB4")
+    terminal = AdbTerminal(device="sathya")
+    terminal.send_command("lspci -k")
     terminal.print_output()
     terminal.close()
+    #signer = sign_m2crypto.M2CryptoSigner(os.path.expanduser('~/.android/adbkey'))
+    #device = adb_commands.AdbCommands.ConnectDevice(rsa_keys=[signer])
+    #print device.Shell('lspci -k')
