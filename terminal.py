@@ -27,12 +27,11 @@ class RemoteTerminal(object):
         logger.debug("Remote channel send_command()")
         return self.command_output, self.command_status
 
-    def print_output(self, skip_cmd=False, skip_last=False):
-        for out in self.command_output:
-            print out
+    def print_output(self):
+        print self.command_output
 
     def check_output(self, keyword):
-        if any(keyword in s for s in self.command_output):
+        if keyword in self.command_output:
             return True
 
         return False
@@ -80,7 +79,9 @@ class SerialTerminal(RemoteTerminal):
         self.terminal.flushInput()
         self.terminal.write(self.command)
         self.terminal.flush()
-        self.command_output = self.terminal.readlines()
+        command_output = self.terminal.readlines()
+
+        self.command_output = ''.join(map(lambda it: it.strip('\r'), command_output))
 
         for error in error_str:
             status = not self.check_output(error)
@@ -119,15 +120,15 @@ class AdbTerminal(LocalTerminal):
     def __init__(self, device=""):
         super(AdbTerminal, self).__init__(device)
         super(AdbTerminal, self).send_command("ls")
+        print self.print_output()
 
     def send_command(self, cmd, error_str=[]):
         return super(AdbTerminal, self).send_command("adb shell " + cmd, error_str)
 
 
-
 if __name__ == "__main__":
-    #terminal = SerialTerminal(port="/dev/ttyUSB4")
-    terminal = AdbTerminal(device="sathya")
+    terminal = SerialTerminal(port="/dev/ttyUSB4")
+    #terminal = AdbTerminal(device="sathya")
     terminal.send_command("lspci -k")
     terminal.print_output()
     terminal.close()
