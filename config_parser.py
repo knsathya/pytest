@@ -3,59 +3,20 @@ import sys
 import logging
 from configparser import ExtendedInterpolation
 from configparser import ConfigParser, SafeConfigParser
+from usb_config_template import config_template
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-template = {
-    #format (default-status(true or false, parser get format, accepted values)
-    'remote_terminal' : (
-        True, dict,
-        {
-            'type' : (True, "get", ['serial', 'adb', 'local'])
-        }
-    ),
-    'serial' : (
-        False, dict,
-        {
-            'name' : (True, "get", None),
-            'baudrate' : (True, "getint", [9600, 115200]),
-            'parity' : (True, "get", ['Odd', 'Even', 'None']),
-            'stopbit' : (True, "getint", [1.5, 1, 2]),
-            'bytesize' : (True, "getint", [8, 7, 6, 5]),
-            'hfc' : (True, "getboolean", [True, False]),
-            'sfc' : (True, "getboolean", [True, False])
-        }
-    ),
-    'adb'   : (
-        False, dict,
-        {
-            'name' : (True, "get", None)
-        }
-    ),
-    'local'   : (
-        False, dict,
-        {
-            'name' : (True, "get", None)
-        }
-    ),
-    'test_1'    : (
-        False, dict,
-        {
-            'name'  : (True, "get", None),
-            'type'  : (True, "get", None),
-            'remote_cmd'    : (True, "get", None),
-            'local_cmd' : (True, "get", None),
-            'remote_expected_result': (True, "get", None),
-            'local_expected_result': (True, "get", None),
-            'local_cmd_timeout': (True, "getint", None),
-            'remote_cmd_timeout': (True, "getint", None),
-        }
-    )
-}
-
 __all__ = ("Namespace", "as_namespace")
+
+config_type_map = {
+    'str' : (str, 'get'),
+    'int' : (int, 'getint'),
+    'bool': (bool, 'getboolean'),
+    'float': (int, 'getfloat'),
+}
 
 class Namespace(dict, object):
     """A dict subclass that exposes its items as attributes.
@@ -133,48 +94,59 @@ class Namespace(dict, object):
     def delattr(ns, name):
         return object.__delattr__(ns, name)
 
-def config_to_dict(parser):
-    cfg_dict = {}
-    for section in parser.sections():
-        res = {}
-        for option in parser.options(section):
-            if section in template.keys() and option in template[section][2].keys():
-                getfunc = template[section][2][option][1]
-                type = str
-                if getfunc == "getint":
-                    type = int
-                elif getfunc == "getboolean":
-                    type = bool
-                else:
-                    type = str
-                res[option] = type(getattr(parser, getfunc)(section, option))
-            else:
-                res[option] = str(parser.get(section, option))
-        cfg_dict[section] = Namespace(res)
-
-    return Namespace(cfg_dict)
-
 class TestConfigParser(object):
-    def __init__(self, cfg):
+
+    def compare_template(self):
+        if self.template is None:
+            return True
+        for section in self.parser.sections():
+            if section not in self.template.keys():
+                logger.debug("section %s does not exist in template" % section)
+                return False
+            for option in self.parser.options(section):
+                if option not in self.template[section].keys():
+                    logger.debug("option %s does not exist in template" % option)
+                    return  False
+        return  True
+
+    def __init__(self, cfg, template=None):
+
         if not os.path.exists(os.path.abspath(cfg)):
             raise IOError("File %s does not exist" % cfg)
+
         self.cfg_file =  cfg
+        self.template = template
         self.parser = ConfigParser()
         self.parser.read(cfg)
 
-        if not self.parser.has_section("remote_terminal"):
-            raise Exception("Missing terminal section")
+        if not self.compare_template():
+            raise IOError("Template does not match config")
 
-        if self.parser.get("remote_terminal", "type") not in ["local", 'adb', 'serial']:
-            raise Exception("Invalid terminal type %s" % self.parser.get("terminal", "type"))
+        cfg_dict = {}
 
-        self.cfg = config_to_dict(self.parser)
+        for section in self.parser.sections():
+            res = {}
+            for option in self.parser.options(section):
+                if template is not None:
+                    type = config_type_map[template[section][option][0]][0]
+                    getfunc = config_type_map[template[section][option][0]][1]
+                    default = template[section][option][1]
+                    res[option] = type(getattr(self.parser, getfunc)(section, option))
+                    if default != [] and res[option] not in default:
+                        logger.debug(default)
+                        logger.debug(res[option])
+                        raise IOError("value does not match defaults")
+                else:
+                    res[option] = getattr(self.parser, "get")(section, option)
 
-        print self.cfg
+                cfg_dict[section] = Namespace(res)
+
+        self.cfg = Namespace(cfg_dict)
 
 
 
 if __name__ == "__main__":
 
-    obj = TestConfigParser("usb-config.ini")
+    obj = TestConfigParser("usb-config.ini", config_template)
+    print obj.cfg
     print "test"
