@@ -23,7 +23,7 @@ class RemoteTerminal(object):
     def open(self):
         logger.debug("Remote terminal open()")
 
-    def send_command(self, cmd, error_str=[]):
+    def send_command(self, cmd, timeout=None, error_str=[]):
         logger.debug("Remote channel send_command()")
         return self.command_output, self.command_status
 
@@ -40,7 +40,7 @@ class RemoteTerminal(object):
         logger.debug("Remote terminal close()")
 
 class SerialTerminal(RemoteTerminal):
-    def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize=8, stopbits=1, hfc=False, sfc=False, timeout=4):
+    def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize=8, stopbits=1, hfc=False, sfc=False, timeout=2):
         super(SerialTerminal, self).__init__(port)
 
         if parity == "Odd":
@@ -71,7 +71,7 @@ class SerialTerminal(RemoteTerminal):
         logger.debug("Using serial port %s baudarate %d parity %s bytesize %d stopbits %d hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
-    def send_command(self, cmd, error_str=["not found", "error", "failed"]):
+    def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
         cmd_status = True
         self.command = cmd + "\r"
         logger.debug("Executing serial command %s" % self.command)
@@ -79,7 +79,13 @@ class SerialTerminal(RemoteTerminal):
         self.terminal.flushInput()
         self.terminal.write(self.command)
         self.terminal.flush()
+        tmp_timeout = self.terminal.timeout
+        if timeout != None:
+            self.terminal.timeout = timeout
+
         command_output = self.terminal.readlines()
+
+        self.terminal.timeout = tmp_timeout
 
         self.command_output = ''.join(map(lambda it: it.strip('\r'), command_output))
 
@@ -100,7 +106,7 @@ class LocalTerminal(RemoteTerminal):
         super(LocalTerminal, self).__init__(name)
         self.terminal = Popen
 
-    def send_command(self, cmd, error_str=["not found", "error", "failed"]):
+    def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
         self.command = cmd
         cmd_list = re.split('[;]',cmd)
         cmd_list = [cmd + ';' for cmd in cmd_list]
@@ -129,9 +135,9 @@ class AdbTerminal(LocalTerminal):
 if __name__ == "__main__":
     terminal = SerialTerminal(port="/dev/ttyUSB4")
     #terminal = AdbTerminal(device="sathya")
-    terminal.send_command("lspci -k")
-    terminal.print_output()
-    terminal.close()
+    #terminal.send_command("ls")
+    #terminal.print_output()
+    #terminal.close()
     #signer = sign_m2crypto.M2CryptoSigner(os.path.expanduser('~/.android/adbkey'))
     #device = adb_commands.AdbCommands.ConnectDevice(rsa_keys=[signer])
     #print device.Shell('lspci -k')

@@ -35,15 +35,40 @@ class USBTest(object):
 
     def do_test_1(self):
         test_params = self.cfg.test_1
-        self.terminal.send_command(test_params.remote_cmd)
+        self.terminal.send_command(test_params.remote_cmd, test_params.remote_cmd_timeout)
         status = self.terminal.check_output(test_params.remote_expected_result)
         self.print_test_result("test_1", test_params, status)
 
     def do_test_2(self):
         test_params = self.cfg.test_2
-        self.terminal.send_command(test_params.remote_cmd)
+        self.terminal.send_command(test_params.remote_cmd, test_params.remote_cmd_timeout)
         status = self.terminal.check_output(test_params.remote_expected_result)
         self.print_test_result("test_2", test_params, status)
+
+    def do_setup_usb_gadet(self, name="Zero"):
+        print "setting up USB gadget %s" % name
+        cmd = "stop adbd;"
+        self.terminal.send_command("stop adbd", 1)
+        self.terminal.send_command("echo "" > /config/usb_gadget/g1/UDC", 1)
+        self.terminal.send_command("stop adbd;", 1)
+        self.terminal.send_command("stop adbd;", 1)
+        self.terminal.send_command("stop adbd;", 1)
+
+
+class USBAndroidTest(USBTest):
+    def __init__(self, cfg):
+        super(USBAndroidTest, self).__init__(cfg)
+
+
+    def do_setup_usb_gadet(self, name="Zero"):
+        print "setting up USB gadget %s" % name
+        cmd = "stop adbd;"
+        self.terminal.send_command("stop adbd", 1)
+        self.terminal.send_command("echo "" > /config/usb_gadget/g1/UDC", 1)
+        self.terminal.send_command("stop adbd;", 1)
+        self.terminal.send_command("stop adbd;", 1)
+        self.terminal.send_command("stop adbd;", 1)
+
 
 if __name__ == "__main__":
     logger.debug("Start USB testing")

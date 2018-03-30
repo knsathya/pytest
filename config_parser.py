@@ -49,6 +49,8 @@ template = {
             'local_cmd' : (True, "get", None),
             'remote_expected_result': (True, "get", None),
             'local_expected_result': (True, "get", None),
+            'local_cmd_timeout': (True, "getint", None),
+            'remote_cmd_timeout': (True, "getint", None),
         }
     )
 }
