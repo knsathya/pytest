@@ -2,8 +2,6 @@ import serial
 import io
 import logging
 from subprocess import Popen, PIPE
-from adb import adb_commands
-from adb import sign_m2crypto
 import os
 import re
 
@@ -59,16 +57,16 @@ class SerialTerminal(RemoteTerminal):
         else:
             bytesize = serial.EIGHTBITS
 
-        if stopbits == 1.5:
+        if stopbits == '1.5':
             stopbits = serial.STOPBITS_ONE_POINT_FIVE
-        elif stopbits == 2:
+        elif stopbits == '2':
             stopbits = serial.STOPBITS_TWO
         else:
             stopbits = serial.STOPBITS_ONE
 
-        self.terminal = serial.Serial(port=port, baudrate=baud, parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
+        self.terminal = serial.Serial(port=port, baudrate=int(baud), parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
 
-        logger.debug("Using serial port %s baudarate %d parity %s bytesize %d stopbits %d hfc %d sfc %d timeout %d" %
+        logger.debug("Using serial port %s baudarate %s parity %s bytesize %d stopbits %s hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
     def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
