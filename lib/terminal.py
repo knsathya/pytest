@@ -7,7 +7,7 @@ import re
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 class RemoteTerminal(object):
     def __init__(self, name):

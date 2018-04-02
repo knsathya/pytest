@@ -6,7 +6,7 @@ from lib.test_libs import TestLib
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 def config_key_check(configobj, *keys):
     obj = configobj
