@@ -41,6 +41,14 @@ class TestConfig(object):
         else:
             return LocalTerminal()
 
+    def configure_dut(self):
+        print self.dut.send_command(self.dut_params['login_cmd'])
+        print self.dut.send_command(self.dut_params['setup_cmd'])
+
+    def reset_dut(self):
+        self.dut.send_command(self.dut_params['reset_cmd'])
+        self.dut.send_command(self.dut_params['exit_cmd'])
+
     def print_test_section(self, test):
         print "Name: %s" % test['name']
         print "Type: %s" % test['type']
@@ -63,16 +71,24 @@ class TestConfig(object):
         host_keys = self.setupobj['test']['preffered-host-terminal'].split(':')
         dut_keys = self.setupobj['test']['preffered-dut-terminal'].split(':')
 
-        self.host = self.create_terminal(self.setupobj[host_keys[0]][host_keys[1]][host_keys[2]])
-        self.dut = self.create_terminal(self.setupobj[dut_keys[0]][dut_keys[1]][dut_keys[2]])
+
+        self.host_params = self.setupobj[host_keys[0]][host_keys[1]][host_keys[2]]
+        self.dut_params = self.setupobj[dut_keys[0]][dut_keys[1]][dut_keys[2]]
+
+        self.host = self.create_terminal(self.host_params)
+        self.dut = self.create_terminal(self.dut_params)
 
         self.testlib = testlib
 
     def exec_tests(self):
-        print self.testobj
-        for id, params in self.testobj.iteritems():
-            getattr(self.testlib, params['handler'])(self.host, self.dut, id, params)
 
+        self.configure_dut()
+
+        for id, params in self.testobj.iteritems():
+            env = self.setupobj['dut']['env']
+            getattr(self.testlib, params['handler'])(self.host, self.dut, id, dict(params.items() + env.items()))
+
+        #self.reset_dut()
 
 if __name__ == "__main__":
     logger.debug("Start USB testing")

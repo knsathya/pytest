@@ -70,8 +70,8 @@ class SerialTerminal(RemoteTerminal):
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
     def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
-        cmd_status = True
-        self.command = cmd + "\r"
+        self.command_status = True
+        self.command = "\r" + cmd + "\r"
         logger.debug("Executing serial command %s" % self.command)
         self.terminal.flushOutput()
         self.terminal.flushInput()
@@ -88,9 +88,8 @@ class SerialTerminal(RemoteTerminal):
         self.command_output = ''.join(map(lambda it: it.strip('\r'), command_output))
 
         for error in error_str:
-            status = not self.check_output(error)
-            if status is False:
-                self.command_status = status
+            if self.check_output(error):
+                self.command_status = False
                 break
 
         return self.command_output, self.command_status
@@ -133,8 +132,8 @@ class AdbTerminal(LocalTerminal):
 if __name__ == "__main__":
     terminal = SerialTerminal(port="/dev/ttyUSB4")
     #terminal = AdbTerminal(device="sathya")
-    #terminal.send_command("ls")
-    #terminal.print_output()
+    terminal.send_command("ls")
+    terminal.print_output()
     #terminal.close()
     #signer = sign_m2crypto.M2CryptoSigner(os.path.expanduser('~/.android/adbkey'))
     #device = adb_commands.AdbCommands.ConnectDevice(rsa_keys=[signer])
