@@ -23,7 +23,7 @@ class TestLib(object):
         logger.debug("Expected result: %s" % params['cmd_expected_result'])
         logger.debug("Actual result: %s" % output)
 
-    def generic_test(self, host, dut, id, params, gadget_type):
+    def generic_test(self, host, dut, id, params):
 
         get_cmd_params = lambda x, i: params[x][i] if i < len(params[x]) else params['default_' + x]
 
