@@ -1,6 +1,6 @@
 import logging
-from configobj import ConfigObj,flatten_errors
-from validate import Validator
+from lib.configobj import ConfigObj,flatten_errors
+from lib.configobj.validate import Validator
 from lib.terminal import SerialTerminal, AdbTerminal, LocalTerminal
 from lib.test_libs import TestLib
 
