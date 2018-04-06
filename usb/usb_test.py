@@ -1,3 +1,4 @@
+import os
 import logging
 from lib.configobj import ConfigObj,flatten_errors
 from lib.configobj.validate import Validator
@@ -28,6 +29,32 @@ def validate_configobj(obj):
             else:
                 raise Exception('The following section was missing:%s ' % ', '.join(section_list))
 
+
+class USBTestLib(TestLib):
+    def configfs_disable_gadget(self, host, dut, id, params):
+        cmd_list = []
+        if params['os_type'] == 'Android':
+            cmd_list.append('remote:stop adbd')
+        cmd_list.append('remote:echo "" > /config/usb_gadget/g1/UDC')
+
+        return self.execute_cmd_list(host, dut, cmd_list, params['default_cmd_timeout'], params['default_cmd_expected_result'], params['default_cmd_error_hint'].split('|'))
+
+    def configfs_add_gadget(self, host, dut, id, params):
+        cmd_list = ['remote:echo 0xa4a0 > /config/usb_gadget/g1/idProduct',
+                    'remote:echo 0x0525 > /config/usb_gadget/g1/idVendor',
+                    'remote:rm /config/usb_gadget/g1/configs/b.1/f1',
+                    'remote:ln -s /config/usb_gadget/g1/functions/SourceSink.1 /config/usb_gadget/g1/configs/b.1/f1']
+
+        return self.execute_cmd_list(host, dut, cmd_list, params['default_cmd_timeout'], params['default_cmd_expected_result'], params['default_cmd_error_hint'].split('|'))
+
+    def enable_gadget(self, host, dut, id, params):
+        cmd_list = ['remote:echo ' + params['device_controller'] + ' > /config/usb_gadget/g1/UDC']
+        if params['os_type'] == 'Android':
+            cmd_list.append('remote:start adbd')
+
+        return self.execute_cmd_list(host, dut, cmd_list, params['default_cmd_timeout'], params['default_cmd_expected_result'], params['default_cmd_error_hint'].split('|'))
+
+
 class TestConfig(object):
 
     def create_terminal(self, terminal):
@@ -42,8 +69,8 @@ class TestConfig(object):
             return LocalTerminal()
 
     def configure_dut(self):
-        print self.dut.send_command(self.dut_params['login_cmd'])
-        print self.dut.send_command(self.dut_params['setup_cmd'])
+        self.dut.send_command(self.dut_params['login_cmd'])
+        self.dut.send_command(self.dut_params['setup_cmd'])
 
     def reset_dut(self):
         self.dut.send_command(self.dut_params['reset_cmd'])
@@ -86,12 +113,17 @@ class TestConfig(object):
 
         for id, params in self.testobj.iteritems():
             env = self.setupobj['dut']['env']
-            getattr(self.testlib, params['handler'])(self.host, self.dut, id, dict(params.items() + env.items()))
+            for handler in params['handler']:
+                output, status = getattr(self.testlib, handler)(self.host, self.dut, id, dict(params.items() + env.items()))
 
         #self.reset_dut()
 
 if __name__ == "__main__":
     logger.debug("Start USB testing")
-    testlib = TestLib()
-    testobj = TestConfig('setup.ini', 'setup-spec.ini', 'test-config.ini', 'test-config-spec.ini', testlib)
+    testlib = USBTestLib()
+    testobj = TestConfig('gpmrb-setup.ini',
+                         os.path.join(os.getcwd(), '../lib/test-setup-defaults.ini'),
+                         'usb-test-config.ini',
+                         os.path.join(os.getcwd(), '../lib/test-config-defaults.ini'),
+                         testlib)
     testobj.exec_tests()

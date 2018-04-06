@@ -104,17 +104,17 @@ class LocalTerminal(RemoteTerminal):
         self.terminal = Popen
 
     def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
+        self.command_status = True
         self.command = cmd
         cmd_list = re.split('[;]',cmd)
         cmd_list = [cmd + ';' for cmd in cmd_list]
         logger.debug("Executing shell command %s" % cmd_list)
         proc = self.terminal(cmd_list, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        self.command_output, self.command_status = proc.communicate('through stdin to stdout')
+        self.command_output, err = proc.communicate('through stdin to stdout')
 
         for error in error_str:
-            status = not self.check_output(error)
-            if status is False:
-                self.command_status = status
+            if self.check_output(error):
+                self.command_status = False
                 break
 
         return self.command_output, self.command_status
