@@ -5,42 +5,97 @@ from subprocess import Popen, PIPE
 import os
 import re
 
-logger = logging.getLogger(__name__)
-logging.basicConfig()
-logger.setLevel(logging.ERROR)
-
-class RemoteTerminal(object):
-    def __init__(self, name):
-        logger.debug("Remote terminal init")
+class Command(object):
+    def __init__(self, name='', timeout=0, error_hint=[], success_hint=[]):
         self.name = name
-        self.terminal = None
-        self.command = ""
-        self.command_output = "None"
-        self.command_status = True
+        self.output = ''
+        self.error = ''
+        self.status = True
+        self.timeout = timeout
+        self.error_hint = error_hint
+        self.success_hint = success_hint
 
-    def open(self):
-        logger.debug("Remote terminal open()")
+    def to_list(self):
+        cmd_list = re.split('[;]', self.name)
+        cmd_list = [cmd + ';' for cmd in cmd_list]
 
-    def send_command(self, cmd, timeout=None, error_str=[]):
-        logger.debug("Remote channel send_command()")
-        return self.command_output, self.command_status
+        return cmd_list
 
-    def print_output(self):
-        print self.command_output
-
-    def check_output(self, keyword):
-        if keyword in self.command_output:
-            return True
+    def check_output(self, keywords):
+        for key in keywords:
+            if key in self.output:
+                return True
 
         return False
 
+    def is_error(self, keywords=[]):
+        keywords =  self.error_hint if len(keywords) == 0 else keywords
+        return self.check_output(keywords)
+
+
+    def is_success(self, keywords=[]):
+        keywords =  self.success_hint if len(keywords) == 0 else keywords
+        return self.check_output(keywords)
+
+    def update_status(self):
+        self.status = True
+
+        if self.is_error():
+            self.status = False
+            return
+
+        if self.is_success():
+            self.status = True
+            return
+
+    def __str__(self):
+        return "Command:%s Status:%s Output:%s" % (self.name.strip(), str(self.status), self.output)
+
+class Terminal(object):
+    def __init__(self, name, logger=None):
+        self.logger = logger or logging.getLogger(__name__)
+        self.name = name
+        self.command = Command()
+
+    def send_command(self, cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
+        self.logger.debug("Terminal: send_command() Cmd: %s timeout %d err_hint %s" % (cmd, timeout, str(error_hints)))
+        self.command = Command(cmd, timeout, error_hints, success_hints)
+
+        return self.command.output, self.command.status
+
+    def print_output(self):
+        self.logger.debug("Terminal: print_output()")
+        self.logger.info("%s" % self.command)
+
+    def check_output(self, hints):
+        return self.command.check_output(hints)
+
     def close(self):
-        logger.debug("Remote terminal close()")
+        self.logger.debug("Terminal: close()")
 
-class SerialTerminal(RemoteTerminal):
-    def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize=8, stopbits=1, hfc=False, sfc=False, timeout=2):
-        super(SerialTerminal, self).__init__(port)
+class ShellTerminal(Terminal):
+    def __init__(self, name, logger=None):
+        super(ShellTerminal, self).__init__(name, logger)
 
+    def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
+        super(ShellTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
+
+        proc = Popen(self.command.to_list(), shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+        self.command.output, self.command.error = proc.communicate('through stdin to stdout')
+        self.command.update_status()
+
+        return self.command.output, self.command.status
+
+class AdbTerminal(ShellTerminal):
+    def __init__(self, device="", logger=None):
+        super(AdbTerminal, self).__init__(device, logger)
+
+    def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
+        cmd = "adb shell " + cmd
+        return super(AdbTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
+
+class SerialTerminal(serial.Serial, Terminal):
+    def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize=8, stopbits=1, hfc=False, sfc=False, timeout=2, logger=None):
         if parity == "Odd":
             parity = serial.PARITY_ODD
         elif parity == "Even":
@@ -64,72 +119,40 @@ class SerialTerminal(RemoteTerminal):
         else:
             stopbits = serial.STOPBITS_ONE
 
-        self.terminal = serial.Serial(port=port, baudrate=int(baud), parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
+        Terminal.__init__(self, port, logger)
 
-        logger.debug("Using serial port %s baudarate %s parity %s bytesize %d stopbits %s hfc %d sfc %d timeout %d" %
+        serial.Serial.__init__(self, port=port, baudrate=int(baud), parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
+
+        self.logger.info("Using serial port %s baudarate %s parity %s bytesize %d stopbits %s hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
-    def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
-        self.command_status = True
-        self.command = "\r" + cmd + "\r"
-        logger.debug("Executing serial command %s" % self.command)
-        self.terminal.flushOutput()
-        self.terminal.flushInput()
-        self.terminal.write(self.command)
-        self.terminal.flush()
-        tmp_timeout = self.terminal.timeout
-        if timeout != None:
-            self.terminal.timeout = timeout
+    def send_command(self, cmd, timeout=-1, error_hints=["not found", "error", "failed"], success_hints=[]):
+        super(SerialTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
 
-        command_output = self.terminal.readlines()
+        self.command.name = "\r" + self.command.name + "\r"
 
-        self.terminal.timeout = tmp_timeout
+        self.flushOutput()
+        self.flushInput()
+        self.write(self.command.name)
+        self.flush()
 
-        self.command_output = ''.join(map(lambda it: it.strip('\r'), command_output))
+        tmp_timeout = self.timeout
+        if self.command.timeout != -1:
+            self.timeout = self.command.timeout
 
-        for error in error_str:
-            if self.check_output(error):
-                self.command_status = False
-                break
+        self.command.output = ''.join(map(lambda it: it.strip('\r'), self.readlines()))
 
-        return self.command_output, self.command_status
+        self.timeout = tmp_timeout
 
-    def close(self):
-        self.terminal.close()
-        super(SerialTerminal, self).close()
+        self.command.update_status()
 
-class LocalTerminal(RemoteTerminal):
-    def __init__(self, name="shell"):
-        super(LocalTerminal, self).__init__(name)
-        self.terminal = Popen
-
-    def send_command(self, cmd, timeout=None, error_str=["not found", "error", "failed"]):
-        self.command_status = True
-        self.command = cmd
-        cmd_list = re.split('[;]',cmd)
-        cmd_list = [cmd + ';' for cmd in cmd_list]
-        logger.debug("Executing shell command %s" % cmd_list)
-        proc = self.terminal(cmd_list, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        self.command_output, err = proc.communicate('through stdin to stdout')
-
-        for error in error_str:
-            if self.check_output(error):
-                self.command_status = False
-                break
-
-        return self.command_output, self.command_status
-
-class AdbTerminal(LocalTerminal):
-    def __init__(self, device=""):
-        super(AdbTerminal, self).__init__(device)
-        super(AdbTerminal, self).send_command("ls")
-        print self.print_output()
-
-    def send_command(self, cmd, error_str=[]):
-        return super(AdbTerminal, self).send_command("adb shell " + cmd, error_str)
+        return self.command.output, self.command.status
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(format='%(message)s')
+    logger.setLevel(logging.INFO)
     terminal = SerialTerminal(port="/dev/ttyUSB4")
     #terminal = AdbTerminal(device="sathya")
     terminal.send_command("ls")

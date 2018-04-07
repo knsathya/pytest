@@ -7,10 +7,10 @@ logging.basicConfig()
 logger.setLevel(logging.ERROR)
 
 
-
-class TestLib(object):
-    def __init__(self):
-        logger.debug("Testparser init()")
+class TestHandlers(object):
+    def __init__(self, logger=None):
+        self.logger = logger or logging.getLogger(__name__)
+        self.logger.debug("TestHandlers init()")
 
     def print_result(self, id, params, output, status):
         print ''.join(['=' for i in range(1, 100)])
@@ -23,18 +23,18 @@ class TestLib(object):
         logger.debug("Expected result: %s" % params['cmd_expected_result'])
         logger.debug("Actual result: %s" % output)
 
-    def _execute_cmd(self, host, dut, cmd_str, cmd_timeout, cmd_expected_result, hint):
+    def _execute_cmd(self, host, remote, cmd_str, cmd_timeout, cmd_expected_result, error_hints):
         output, status = "Invalid command", False
         if cmd_str.startswith('host:'):
             cmd = cmd_str[5:]
-            output, status = host.send_command(cmd, cmd_timeout, hint)
+            output, status = host.send_command(cmd, cmd_timeout, error_hints)
             if cmd_expected_result != '':
                 status = host.check_output(cmd_expected_result)
         elif cmd_str.startswith('remote:'):
             cmd = cmd_str[7:]
-            output, status = dut.send_command(cmd, cmd_timeout, hint)
+            output, status = remote.send_command(cmd, cmd_timeout, error_hints)
             if cmd_expected_result != '':
-                status = dut.check_output(cmd_expected_result)
+                status = remote.check_output(cmd_expected_result)
 
         if status is False:
             logger.debug("Command %s Failed" % cmd_str)

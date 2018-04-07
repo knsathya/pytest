@@ -3,7 +3,7 @@ import logging
 from lib.configobj import ConfigObj,flatten_errors
 from lib.configobj.validate import Validator
 from lib.terminal import SerialTerminal, AdbTerminal, LocalTerminal
-from lib.test_libs import TestLib
+from lib.test_handlers import TestLib
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
