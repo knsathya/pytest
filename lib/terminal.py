@@ -58,23 +58,24 @@ class Terminal(object):
         self.command = Command()
 
     def send_command(self, cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
-        self.logger.debug("Terminal: send_command() Cmd: %s timeout %d err_hint %s" % (cmd, timeout, str(error_hints)))
+        self.logger.debug("%s: send_command() Cmd: %s Timeout: %d err_hint: %s" % (self.name, cmd, timeout, str(error_hints)))
         self.command = Command(cmd, timeout, error_hints, success_hints)
 
         return self.command.output, self.command.status
 
     def print_output(self):
-        self.logger.debug("Terminal: print_output()")
+        self.logger.debug("%s print_output()" % (self.name))
         self.logger.info("%s" % self.command)
 
     def check_output(self, hints):
+        self.logger.debug("%s check_output() hints:%s" % (self.name, str(hints)))
         return self.command.check_output(hints)
 
     def close(self):
-        self.logger.debug("Terminal: close()")
+        self.logger.debug("%s close()" % (self.name))
 
 class ShellTerminal(Terminal):
-    def __init__(self, name, logger=None):
+    def __init__(self, name='HOST-SHELL', logger=None):
         super(ShellTerminal, self).__init__(name, logger)
 
     def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
@@ -87,7 +88,7 @@ class ShellTerminal(Terminal):
         return self.command.output, self.command.status
 
 class AdbTerminal(ShellTerminal):
-    def __init__(self, device="", logger=None):
+    def __init__(self, device="USB-ADB", logger=None):
         super(AdbTerminal, self).__init__(device, logger)
 
     def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
@@ -123,7 +124,7 @@ class SerialTerminal(serial.Serial, Terminal):
 
         serial.Serial.__init__(self, port=port, baudrate=int(baud), parity=parity, bytesize=bytesize, stopbits=stopbits, xonxoff=sfc, rtscts=hfc, timeout=timeout)
 
-        self.logger.info("Using serial port %s baudarate %s parity %s bytesize %d stopbits %s hfc %d sfc %d timeout %d" %
+        self.logger.debug("Using serial port %s baudarate %s parity %s bytesize %d stopbits %s hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
     def send_command(self, cmd, timeout=-1, error_hints=["not found", "error", "failed"], success_hints=[]):
