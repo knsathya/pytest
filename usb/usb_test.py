@@ -54,9 +54,9 @@ if __name__ == "__main__":
     #logger.setLevel(logging.DEBUG)
     logger = setup_logging('usb-log.yaml')
     testhandlers = USBTestHandlers()
-    testobj = TestManager(os.path.join(os.getcwd(), 'gpmrb-setup.ini'),
+    testobj = TestManager(os.path.join(os.getcwd(), 'gpmrb-test-setup.ini'),
                          os.path.join(os.getcwd(), '../lib/test-setup-defaults.ini'),
-                         os.path.join(os.getcwd(), 'usb-test-config.ini'),
+                         os.path.join(os.getcwd(), 'usb-test-default.ini'),
                          os.path.join(os.getcwd(), '../lib/test-config-defaults.ini'),
                         testhandlers, logger=logger)
     testobj.exec_tests(0)

@@ -4,7 +4,7 @@ import logging
 from lib.configobj import ConfigObj,flatten_errors
 from lib.configobj.validate import Validator
 from terminal import ShellTerminal, SerialTerminal, AdbTerminal
-from print_formats import format_h1
+from decorators import format_h1, EntryExit
 
 class TestManager(object):
 
@@ -33,6 +33,7 @@ class TestManager(object):
         if not os.path.exists(cfg):
             raise IOError("File %s does not exists" % cfg)
 
+    @EntryExit
     def _create_terminal(self, terminal):
         self.logger.debug(format_h1("Create %s terminal" % terminal['type']))
         if terminal['type'] == 'serial':
@@ -45,11 +46,13 @@ class TestManager(object):
         else:
             return ShellTerminal()
 
+    @EntryExit
     def _setup_remote(self):
         self.logger.debug(format_h1("Setup remote"))
         self.remote.send_command(self.remote_params['login_cmd'])
         self.remote.send_command(self.remote_params['setup_cmd'])
 
+    @EntryExit
     def _reset_remote(self):
         self.logger.debug(format_h1("Reset remote"))
         self.remote.send_command(self.remote_params['reset_cmd'])
@@ -107,6 +110,7 @@ class TestManager(object):
         self.logger.debug("Remote Cmd Expected Results: %s" % test['remote_expected_result'])
         self.logger.debug(format_h1())
 
+    @EntryExit
     def exec_tests(self, index=-1):
         self._setup_remote()
         if index == -1:

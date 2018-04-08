@@ -4,6 +4,7 @@ import logging
 from subprocess import Popen, PIPE
 import os
 import re
+from decorators import EntryExit
 
 class Command(object):
     def __init__(self, name='', timeout=0, error_hint=[], success_hint=[]):
@@ -57,20 +58,24 @@ class Terminal(object):
         self.name = name
         self.command = Command()
 
+    @EntryExit
     def send_command(self, cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
         self.logger.debug("%s: send_command() Cmd: %s Timeout: %d err_hint: %s" % (self.name, cmd, timeout, str(error_hints)))
         self.command = Command(cmd, timeout, error_hints, success_hints)
 
         return self.command.output, self.command.status
 
+    @EntryExit
     def print_output(self):
         self.logger.debug("%s print_output()" % (self.name))
         self.logger.info("%s" % self.command)
 
+    @EntryExit
     def check_output(self, hints):
         self.logger.debug("%s check_output() hints:%s" % (self.name, str(hints)))
         return self.command.check_output(hints)
 
+    @EntryExit
     def close(self):
         self.logger.debug("%s close()" % (self.name))
 
@@ -78,6 +83,7 @@ class ShellTerminal(Terminal):
     def __init__(self, name='HOST-SHELL', logger=None):
         super(ShellTerminal, self).__init__(name, logger)
 
+    @EntryExit
     def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
         super(ShellTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
 
@@ -91,6 +97,7 @@ class AdbTerminal(ShellTerminal):
     def __init__(self, device="USB-ADB", logger=None):
         super(AdbTerminal, self).__init__(device, logger)
 
+    @EntryExit
     def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
         cmd = "adb shell " + cmd
         return super(AdbTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
@@ -127,6 +134,7 @@ class SerialTerminal(serial.Serial, Terminal):
         self.logger.debug("Using serial port %s baudarate %s parity %s bytesize %d stopbits %s hfc %d sfc %d timeout %d" %
                      (port, baud, parity, bytesize, stopbits, hfc, sfc, timeout))
 
+    @EntryExit
     def send_command(self, cmd, timeout=-1, error_hints=["not found", "error", "failed"], success_hints=[]):
         super(SerialTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
 

@@ -1,13 +1,14 @@
 import os
 import sys
 import logging
-from print_formats import format_h1
+from decorators import format_h1, EntryExit
 
 class TestHandlers(object):
     def __init__(self, logger=None):
         self.logger = logger or logging.getLogger(__name__)
         self.logger.debug("TestHandlers init()")
 
+    @EntryExit
     def print_result(self, id, params, output, status):
         self.logger.info(format_h1("%s test results" % str(id)))
         self.logger.info("Test ID: %s" % id)
@@ -18,6 +19,7 @@ class TestHandlers(object):
         self.logger.debug("Actual result: %s" % output)
         self.logger.info(''.join(['=' for i in range(1, 100)]))
 
+    @EntryExit
     def _execute_cmd(self, host, remote, cmd_str, cmd_timeout, error_hints, success_hints):
         output, status = "Invalid command", False
         if cmd_str.startswith('host:'):
@@ -35,6 +37,7 @@ class TestHandlers(object):
 
         return output, status
 
+    @EntryExit
     def execute_cmd_list(self, host, remote, cmd_list, timeout, error_hints, success_hints):
         output, status = "Invalid command", False
 
@@ -45,6 +48,7 @@ class TestHandlers(object):
 
         return output, status
 
+    @EntryExit
     def execute_test(self, host, remote, id, params):
         output, status = "Invalid command", False
         get_cmd_params = lambda x, i: params[x][i] if i < len(params[x]) else params['default_' + x]
