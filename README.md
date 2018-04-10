@@ -1,7 +1,7 @@
 # pytest
 Python based test scripts
 
-This test framework is mainly used for performing coordinated testing in host:remote architeure. In host:remote test model, we have might have requirements to execute test commands in remote and host in coordinated manner, which is the motivation behind creating this framework.
+This test framework is mainly used for performing coordinated testing in host:remote architecture. In host:remote based test model, we might have requirements to execute test commands in both remote and host in coordinated manner, which is the primary motivation behind creating this framework.
 
 Currently this framework supports,  following remote connection models.
 
