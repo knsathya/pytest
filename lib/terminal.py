@@ -102,6 +102,15 @@ class AdbTerminal(ShellTerminal):
         cmd = "adb shell " + cmd
         return super(AdbTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
 
+class SSHTerminal(ShellTerminal):
+    def __init__(self, device="USB-ADB", logger=None):
+        super(SSHTerminal, self).__init__(device, logger)
+
+    @EntryExit
+    def send_command(self,  cmd, timeout=0, error_hints=["not found", "error", "failed"], success_hints=[]):
+        cmd = "ssh " + cmd
+        return super(SSHTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
+
 class SerialTerminal(serial.Serial, Terminal):
     def __init__(self, port="/dev/ttyUSB0", baud=115200, parity="None", bytesize=8, stopbits=1, hfc=False, sfc=False, timeout=2, logger=None):
         if parity == "Odd":
