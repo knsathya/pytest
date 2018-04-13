@@ -79,6 +79,9 @@ class Terminal(object):
     def close(self):
         self.logger.debug("%s close()" % (self.name))
 
+    def __str__(self):
+        return self.name
+
 class ShellTerminal(Terminal):
     def __init__(self, name='HOST-SHELL', logger=None):
         super(ShellTerminal, self).__init__(name, logger)
@@ -103,7 +106,7 @@ class AdbTerminal(ShellTerminal):
         return super(AdbTerminal, self).send_command(cmd, timeout, error_hints, success_hints)
 
 class SSHTerminal(ShellTerminal):
-    def __init__(self, device="USB-ADB", logger=None):
+    def __init__(self, device="SSH-DEV", logger=None):
         super(SSHTerminal, self).__init__(device, logger)
 
     @EntryExit
