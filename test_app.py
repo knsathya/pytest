@@ -1,10 +1,8 @@
 import os
-import itertools as it
-import re
 import logging
 from lib.config_parser import ConfigParse
 from lib.device import Device
-import collections
+import importlib
 
 config_env = {'CONFIG_DIR' : os.path.join(os.getcwd(), 'config'),
           'CONFIG_SPEC_DIR' : os.path.join(os.getcwd(), 'config-spec')}
@@ -35,54 +33,62 @@ def flatten_dict(d):
 
 class TestSetup(object):
 
+    def _create_device(self, name, params):
+        return Device(name=params[name], terminal_list=params[name]['terminal'],
+                      default_terminal=params[name]['default_terminal'], logger=logger)
+
+    def _get_device(self, name):
+        if name == 'host':
+            return self.host
+        elif name == 'remote':
+            return self.remote
+
+    def _parse_cmdstr(self, cmd_str):
+        device = cmd_str.split(':')[0]
+        cmd = cmd_str.split(':=')[1]
+        channel = ''.join(cmd_str.split(':=')[0].split(':')[1:])
+
+        return device, channel, cmd
+
     def __init__(self, setup_cfg, setup_spec, setup_user='', logger=None):
         self.logger = logger or logging.getLogger(__name__)
 
-        fenv_opt = flatten_dict(config_env)
-
         self.cfg = ConfigParse(setup_cfg, setup_spec, setup_user, os_env=True, opt_env=flatten_dict(config_env), logger=logger).get_cfg()
 
-        #logger.info(self.cfg)
+        self.logger.debug(self.cfg)
 
         params = self.cfg['test']['platform-env']
 
         self.plat_env = ConfigParse(params['base_cfg'], params['spec_cfg'], params['usr_cfg'], os_env=True, logger=logger).get_cfg()
 
-        #logger.info(self.plat_env)
+        self.logger.debug(self.plat_env)
 
         params = self.cfg['test']['test-dm-config']
 
         self.test_obj = {}
 
         for dm_name, test_params  in params.iteritems():
-            #env_opt = dict_merge(flatten_dict(self.plat_env.dict()) , flatten_dict(os.environ))
-            #plat_env_copy = self.plat_env.copy()
-            #fenv_opt = flatten_dict(plat_env_copy, os_env=False)
-            #print flatten_json(self.plat_env, os_env=False)
-            #logger.info(flatten_dict(self.plat_env))
-            #logger.info(dict_merge(flatten_dict(self.plat_env) , flatten_dict(os.environ)))
-            #logger.info(flatten_dict(self.plat_env.dict()))
             test_obj = ConfigParse(test_params['base_cfg'], test_params['spec_cfg'], test_params['usr_cfg'],
                                    os_env=True, opt_env=flatten_dict(self.plat_env.dict()), logger=logger).get_cfg()
-            #logger.info(test_obj)
+            self.test_obj[dm_name] = (test_obj, test_params['handler_module'], test_params['handler_class'])
 
-        '''
+        # Create devices
+        self.host = self._create_device('host', self.cfg)
+        self.remote = self._create_device('remote', self.cfg)
 
-        params = self.cfg['host']
+        self.logger.debug(self.host)
+        self.logger.debug(self.remote)
 
-        self.host = Device(name=params['name'], terminal_list=params['terminal'],
-                           default_terminal=params['default_terminal'], logger=logger)
+    def exec_test(self, name=None):
+        self.logger.debug("Exec %s tests" % "all" if name is None else name)
 
-        params = self.cfg['remote']
+        for dm, dm_params in self.test_obj.iteritems():
+            self.logger.debug("Executing %s tests" % dm)
+            self.logger.debug("Loading %s %s" % (dm_params[1], dm_params[2]))
+            test_module = importlib.import_module(dm_params[1])
+            handler_class = dm_params[2]
 
-        self.remote = Device(name=params['name'], terminal_list=params['terminal'],
-                             default_terminal=params['default_terminal'], logger=logger)
-
-        params = self.cfg['test']['platform-env']
-
-        self.env = ConfigParse(params['base_cfg'], params['spec_cfg'], params['usr_cfg'], logger).get_cfg()
-
-        '''
+            logger.debug("Loading %s %s" % dm_params[1], dm_params[2])
 
 
 if __name__ == '__main__':
@@ -94,4 +100,5 @@ if __name__ == '__main__':
     print os.getcwd()
 
     testobj = TestSetup(os.path.join(os.getcwd(), 'config', 'drgn410c-base-test-setup.ini'), os.path.join(os.getcwd(), 'config-spec', 'test-setup-spec.ini'), logger=logger)
+    testobj.exec_test()
 
