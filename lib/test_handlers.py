@@ -4,9 +4,10 @@ import logging
 from decorators import format_h1, EntryExit
 
 class TestHandlers(object):
-    def __init__(self, logger=None):
+    def __init__(self, setup, logger=None):
         self.logger = logger or logging.getLogger(__name__)
         self.logger.debug("TestHandlers init()")
+        self.setup = setup
 
     @EntryExit
     def print_result(self, id, params, output, status):

@@ -9,9 +9,6 @@ def _sub_env(section, key, env_opt=None, logger=None):
 
     def lookup(match):
 
-        logger.info("Found match")
-        logger.info(match.groups())
-
         key = match.group(2)
 
         if key in env_opt.keys():
@@ -19,8 +16,8 @@ def _sub_env(section, key, env_opt=None, logger=None):
 
         return match.group(1)
 
-    pattern = re.compile(r'(\${(\w+)})')
-    logger.info(section[key])
+    pattern = re.compile(r'(\${(.*)}s)')
+
     if type(section[key]) == list:
         for index, opt in enumerate(section[key]):
             replaced = pattern.sub(lookup, opt)
@@ -66,8 +63,6 @@ class ConfigParse(object):
 
         if opt_env is not None:
             cfgobj.walk(_sub_env, env_opt=opt_env, logger=logger)
-
-        self.logger.info(cfgobj)
 
         if os_env is True:
             cfgobj.walk(_sub_env, env_opt=os.environ, logger=logger)

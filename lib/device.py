@@ -266,29 +266,18 @@ class Device(object):
         cmd = ''
         channel_name = default_channel
 
-        if cmd_str.startswith("host:"):
+        if ':=' in cmd_str:
             cmd = cmd_str[cmd_str.index(':=') + 2:]
-            channel_name = cmd_str[5:cmd_str.index(':=')]
-        elif cmd_str.startswith("remote:"):
-            cmd = cmd_str[cmd_str.index(':=') + 2:]
-            channel_name = cmd_str[7:cmd_str.index(':=')]
+            channel_name = cmd_str[0:cmd_str.index(':=')]
 
         return cmd, channel_name
 
-    def _exec_cmd(self, cmd_str, timeout, error_hints, success_hints, default_channel):
-        cmd= ''
-        cmd_index = 0
-        channel_index = 0
-
-        if cmd_str.startswith("host:") or cmd_str.startswith("remote:"):
-            cmd_index = cmd_str.index(':=') + 2
-
-        cmd = cmd_str[cmd_index:]
+    def _exec_cmd(self, cmd, timeout, error_hints, success_hints, default_channel):
 
         output, status = self.current_terminal.send_command(cmd, timeout, error_hints, success_hints)
 
         if status is False:
-            self.logger.error("Command %s Failed" % cmd_str)
+            self.logger.error("Command %s Failed" % cmd)
             self.logger.error(''.join(['*' for i in range(1, 100)]))
             self.logger.error("Actual result: %s" % output)
             self.logger.error(''.join(['*' for i in range(1, 100)]))
@@ -296,19 +285,21 @@ class Device(object):
         return output, status
 
     @EntryExit
-    def send_command(self, cmd, timeout=1, error_hints=["not found", "error", "failed"], success_hints=[], channel_name=""):
+    def send_command(self, cmds, timeout=1, error_hints=["not found", "error", "failed"], success_hints=[], channel_name=""):
         output, status = "Invalid command", False
 
-        if type(cmd) is list:
-            for cmd_str in cmd:
-                self.current_terminal = self._get_terminal(self._cmd_params(cmd_str, channel_name))
+        if type(cmds) is list:
+            for cmd_str in cmds:
+                cmd, channel = self._cmd_params(cmd_str, channel_name)
+                self.current_terminal = self._get_terminal(channel)
                 if self.current_terminal is None:
                     self.logger.error("Invalid terminal : %s\n", channel_name)
-                output, status = self._exec_cmd(cmd_str, timeout, error_hints, success_hints)
+                output, status = self._exec_cmd(cmd, timeout, error_hints, success_hints)
                 if status is False:
                     break
-        elif type(cmd) is str:
-            self.current_terminal = self._get_terminal(self._cmd_params(cmd, channel_name))
+        elif type(cmds) is str:
+            cmd, channel = self._cmd_params(cmds, channel_name)
+            self.current_terminal = self._get_terminal(channel)
             if self.current_terminal is None:
                 self.logger.error("Invalid terminal : %s\n", channel_name)
             output, status = self._exec_cmd(cmd, timeout, error_hints, success_hints)

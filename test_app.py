@@ -37,7 +37,7 @@ class TestSetup(object):
         return Device(name=params[name], terminal_list=params[name]['terminal'],
                       default_terminal=params[name]['default_terminal'], logger=logger)
 
-    def _get_device(self, name):
+    def get_device(self, name):
         if name == 'host':
             return self.host
         elif name == 'remote':
@@ -80,15 +80,14 @@ class TestSetup(object):
         self.logger.debug(self.remote)
 
     def exec_test(self, name=None):
-        self.logger.debug("Exec %s tests" % "all" if name is None else name)
+        self.logger.debug("Execute %s tests" % "all" if name is None else name)
 
-        for dm, dm_params in self.test_obj.iteritems():
+        for dm, params in self.test_obj.iteritems():
             self.logger.debug("Executing %s tests" % dm)
-            self.logger.debug("Loading %s %s" % (dm_params[1], dm_params[2]))
-            test_module = importlib.import_module(dm_params[1])
-            handler_class = dm_params[2]
+            test_obj, test_module, handler_class = params
+            logger.debug("Loading module: %s class: %s" % (test_module, handler_class))
+            handler_obj = getattr(importlib.import_module(test_module), handler_class)(setup=self, logger=self.logger)
 
-            logger.debug("Loading %s %s" % dm_params[1], dm_params[2])
 
 
 if __name__ == '__main__':
