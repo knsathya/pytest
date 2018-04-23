@@ -1,0 +1,40 @@
+[
+  {
+    "name": "sample-test-1",
+    "type": "enum_test",
+    "handler": "check_pci_id",
+    "args": {
+      "device-name": "remote-0",
+      "preffered-channel": "serial",
+      "pci-id": "100",
+      "pci-driver": "sample-driver"
+    }
+  },
+
+  {
+    "name": "sample-test-2",
+    "type": "enum_test",
+    "handler": "read_file_test",
+    "args": {
+      "device-name": "remote-0",
+      "preffered-channel": "serial",
+      "file-name": "/sys/class/usb/pci-value",
+      "expected-result": "test pci"
+    }
+  },
+
+  {
+    "name": "sample-test-3",
+    "type": "platform_test",
+    "handler": "execute_commands",
+    "args": {
+      "cmd_list": [
+        {
+          "device-name": "remote",
+          "preffered-channel": "serial",
+          "command": "echo /proc/version"
+        }
+      ]
+    }
+  }
+]

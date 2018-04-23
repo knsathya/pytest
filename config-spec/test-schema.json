@@ -1,0 +1,120 @@
+{
+  "type": "array",
+  "items": {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/generic-test"
+      },
+      {
+        "$ref": "#/definitions/read-file-test"
+      },
+      {
+        "$ref": "#/definitions/pci-id-test"
+      }
+    ]
+  },
+
+  "definitions": {
+
+    "device-params": {
+      "type": "object",
+      "properties": {
+        "device-name": { "type": "string", "pattern": "^(device|remote)-?[0-9]*?$" },
+        "preffered-channel": {
+          "enum": [ "serial", "usb-adb", "shell", "ssh", "*"],  "default": "*"
+        }
+      }
+    },
+
+    "command-params": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/device-params"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "command": { "type": "string" },
+            "timeout": { "type": "integer", "minimum": 0, "default": 1 },
+            "repeat_count": { "type": "integer", "minimum": 1, "default": 1 },
+            "success_hints": { "type": "array", "items": { "type": "string" } },
+            "error_hints": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [ "not found", "error", "failed" ]
+            }
+          }
+        }
+      ]
+    },
+
+    "generic-test": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "enum": [ "platform_test", "enum_test", "functional_test", "stress_test" ],
+          "default": "platform_test"
+        },
+        "handler": { "enum": [ "execute_commands" ],  "default": "execute_commands" },
+        "args": {
+          "type": "object",
+          "properties": {
+            "cmd_list": { "type": "array", "items": { "$ref": "#/definitions/command-params" } }
+          }
+        }
+      }
+    },
+
+    "read-file-test": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "enum": [ "platform_test", "enum_test", "functional_test", "stress_test" ],
+          "default": "enum_test"
+        },
+        "handler": { "type": "string", "enum": [ "read_file_test" ], "default": "read_file_test" },
+        "args": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/device-params"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "file-name": { "type": "string" },
+                "expected-result": { "type": "string" }
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    "pci-id-test": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "enum": [ "platform_test", "enum_test", "functional_test", "stress_test" ], "default": "enum_test" },
+        "handler": { "type": "string", "enum": [ "check_pci_id" ], "default": "check_pci_id" },
+        "args": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/device-params"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "pci-id": { "type": "string" },
+                "pci-driver": { "type": "string" }
+              }
+            }
+          ]
+        }
+      }
+    }
+
+  }
+
+}

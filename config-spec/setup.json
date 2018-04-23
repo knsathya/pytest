@@ -1,0 +1,44 @@
+{
+  "definitions" : {
+    "serial-params": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["serial", "usb-adb", "shell", "ssh"], "default": "serial" },
+        "port": { "type": "string", "default": "/dev/ttyUSB0" },
+        "baudrate": { "type": "integer", "enum": [9600, 14400, 19200, 38400, 57600, 115200], "default": "115200" },
+        "parity": { "type": "string", "enum": ["Odd", "Even", "None"], "default": "None" },
+        "stopbit": { "type": "number", "enum": [1, 1.5, 2], "default": "1" },
+        "bytesize": { "type": "integer", "minimum": 5, "maximum": 8, "default": 8 },
+        "hfc": { "type": "boolean", "default":false},
+        "sfc": { "type": "boolean", "default":false},
+        "timeout": { "type": "integer", "minimum": 0, "maximum": 5, "default": 1 }
+      }
+    },
+    "adb-params": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["serial", "usb-adb", "shell", "ssh"], "default": "serial" },
+        "name": { "type": "string", "default": "ADBDEVICE0" }
+      }
+    },
+    "terminal-params": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["serial", "usb-adb", "shell", "ssh"], "default": "serial" },
+        "name": { "type": "string", "default": "bash" }
+      }
+    },
+    "ssh-settings": {
+      "type": "params",
+      "properties": {
+        "type": { "type": "string", "enum": ["serial", "usb-adb", "shell", "ssh"], "default": "serial" },
+        "hostname": { "type": "string", "format": "ip-address", "default": "127.0.0.1" },
+        "port": { "type": "integer", "default": 22 },
+        "username": { "type": "string", "default": "" },
+        "password": { "type": "string", "default": "" },
+        "pkey": { "type": "string", "default": "" }   ,
+        "pkey_filename": { "type": "string", "default": "" }
+      }
+    }
+  }
+}
