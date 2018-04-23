@@ -4,7 +4,6 @@ import os
 import serial
 import logging
 from subprocess import Popen, PIPE
-from terminal import AdbTerminal, SerialTerminal, ShellTerminal, SSHTerminal
 from decorators import format_h1, EntryExit
 import paramiko
 
