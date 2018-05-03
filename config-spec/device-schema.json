@@ -1,0 +1,280 @@
+{
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "required": [
+        "platform-name",
+        "hostname"
+    ],
+    "properties": {
+        "platform-name": {
+            "type": "string"
+        },
+
+        "hostname": {
+            "type": "string",
+            "format": "hostname"
+        },
+
+        "logins": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/login-params"
+            }
+
+        },
+
+        "io-ports": {
+            "type": "object",
+            "properties": {
+                "serial-devices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/serial-port-params"
+                    },
+                    "default": []
+                },
+                "usb-devices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usb-device-params"
+                    },
+                    "default": []
+                },
+                "usb-hosts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usb-host-params"
+                    },
+                    "default": []
+                },
+                "network-devices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network-device-params"
+                    },
+                    "default": []
+                }
+            },
+            "default": {}
+        },
+
+        "env-params": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/os-env-param"
+            },
+            "default": []
+        }
+    },
+
+    "definitions": {
+
+        "os-env-param": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "object",
+                    "properties": {
+                        "Android": {
+                            "type": "string"
+                        },
+                        "Clear-OS": {
+                            "type": "string"
+                        },
+                        "Yocto-OS": {
+                            "type": "string"
+                        },
+                        "Ubuntu": {
+                            "type": "string"
+                        },
+                        "Fedora": {
+                            "type": "string"
+                        },
+                        "Linux": {
+                            "type": "string"
+                        },
+                        "default": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "default": { }
+        },
+
+        "login-params": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+
+        "hw-id-params": {
+            "enum-type": {
+                "enum": [
+                    "pci",
+                    "platform",
+                    "acpi"
+                ]
+            },
+            "hw-id": {
+                "type": "string"
+            }
+        },
+
+        "serial-port-params": {
+            "type": "object",
+            "allOf": [
+                { "$ref": "#/definitions/hw-id-params" },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "serial"
+                            ],
+                            "default": "serial"
+                        },
+                        "port": {
+                            "type": "string",
+                            "default": "COM1"
+                        },
+                        "baudrate": {
+                            "type": "integer",
+                            "enum": [
+                                9600,
+                                14400,
+                                19200,
+                                38400,
+                                57600,
+                                115200
+                            ],
+                            "default": "115200"
+                        },
+                        "parity": {
+                            "type": "string",
+                            "enum": [
+                                "Odd",
+                                "Even",
+                                "None"
+                            ],
+                            "default": "None"
+                        },
+                        "stopbit": {
+                            "type": "number",
+                            "enum": [
+                                1,
+                                1.5,
+                                2
+                            ],
+                            "default": 1
+                        },
+                        "bytesize": {
+                            "type": "integer",
+                            "minimum": 5,
+                            "maximum": 8,
+                            "default": 8
+                        },
+                        "hfc": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "sfc": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "timeout": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 1
+                        }
+                    }
+                }
+            ]
+        },
+
+        "usb-device-params": {
+            "type": "object",
+            "allOf": [
+                { "$ref": "#/definitions/hw-id-params" },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "usb-adb"
+                            ],
+                            "default": "usb-adb"
+                        },
+                        "name": {
+                            "type": "string",
+                            "default": "ADBDEVICE0"
+                        }
+                    }
+                }
+            ]
+        },
+
+        "usb-host-params": {
+            "type": "object",
+            "allOf": [
+                { "$ref": "#/definitions/hw-id-params" },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "usb-host"
+                            ],
+                            "default": "usb-host"
+                        },
+                        "name": {
+                            "type": "string",
+                            "default": "ADBDEVICE0"
+                        }
+                    }
+                }
+            ]
+        },
+
+        "network-device-params": {
+            "type": "object",
+            "allOf": [
+                { "$ref": "#/definitions/hw-id-params" },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "net"
+                            ],
+                            "default": "net"
+                        },
+                        "net-type": {
+                            "enum": [
+                                "wired",
+                                "wireless"
+                            ],
+                            "default": "wired"
+                        },
+                        "ip": {
+                            "type": "string",
+                            "oneOf": [
+                                {
+                                    "format": "ipv4"
+                                },
+                                {
+                                    "format": "ipv6"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,71 @@
+{
+    "platform-name": "Dragon Board 410C",
+    "hostname": "linaro-alip",
+    "logins": [
+        {
+            "username": "root",
+            "password": ""
+        }
+    ],
+    "io-ports": {
+        "serial-devices": [
+            {
+                "enum-type": "pci",
+                "hw-id": "",
+                "type": "serial",
+                "port": "UART1",
+                "baudrate": 115200,
+                "parity": "None",
+                "stopbit": 1,
+                "bytesize": 8,
+                "hfc": false,
+                "sfc": false,
+                "timeout": 1
+            }
+        ]
+    },
+    "env-params": [
+        {
+            "name": "root_mount",
+            "value": {
+                "default-value": "/"
+            }
+        },
+        {
+            "name": "data_mount",
+            "value": {
+                "default-value": "/tmp"
+            }
+        },
+        {
+            "name": "procfs_mount",
+            "value": {
+                "default-value": "/proc"
+            }
+        },
+        {
+            "name": "sysfs_mount",
+            "value": {
+                "default-value": "/sys"
+            }
+        },
+        {
+            "name": "debugfs_mount",
+            "value": {
+                "default-value": "/sys/kernel/debug"
+            }
+        },
+        {
+            "name": "configfs_mount",
+            "value": {
+                "default-value": "/sys/kernel/config"
+            }
+        },
+        {
+            "name": "kernel_mod_path",
+            "value": {
+                "default": "/vendor/lib/modules/"
+            }
+        }
+    ]
+}

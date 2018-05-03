@@ -1,0 +1,107 @@
+{
+    "type": "object",
+    "properties":{
+        "setup-params": {
+            "type": "object",
+            "required": [
+                "host-name",
+                "connections"
+            ],
+            "properties": {
+                "host-name": {
+                    "enum": [
+                        "host"
+                    ],
+                    "default": "host"
+                },
+                "connections": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "conn-type": {
+                                "enum": [
+                                    "serial",
+                                    "usb-adb",
+                                    "net"
+                                ]
+                            },
+                            "conn-device": {
+                                "type": "object",
+                                "required": [
+                                    "dev-name",
+                                    "os-name",
+                                    "config",
+                                    "schema"
+                                ],
+                                "properties": {
+                                    "dev-name": {
+                                        "type": "string",
+                                        "pattern": "^remote-?[0-9]*?$"
+                                    },
+                                    "os-name": {
+                                        "enum": [
+                                            "Android",
+                                            "Clear-OS",
+                                            "Yocto-OS",
+                                            "Ubuntu",
+                                            "Fedora",
+                                            "Linux"
+                                        ]
+                                    },
+                                    "config": {
+                                        "type": "string",
+                                        "pattern": "^.*.json$"
+                                    },
+                                    "schema": {
+                                        "type": "string",
+                                        "pattern": "^.*-schema.json$",
+                                        "default": "device-schema.json"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {}
+                }
+            }
+        },
+        "test-list": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/test-params"
+            }
+        }
+
+    },
+    "definitions": {
+
+        "test-params": {
+            "type": "object",
+            "required": [
+                "domain",
+                "config",
+                "schema"
+            ],
+            "properties": {
+                "domain": {
+                    "enum": [
+                        "USB",
+                        "PLATFORM",
+                        "STORAGE",
+                        "GRAPHICS",
+                        "CORE",
+                        "SENSOR"
+                    ]
+                },
+                "config": {
+                    "type": "string",
+                    "pattern": "^.*.json$"
+                },
+                "schema": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
